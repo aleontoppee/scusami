@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scusami...</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      background-size: 400% 400%;
+      animation: gradientShift 25s ease infinite;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      background: transparent;
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .center-message {
+      font-family: 'Pacifico', cursive;
+      color: #ffffff;
+      font-size: 4rem;
+      text-align: center;
+      animation: glow 1s ease-in-out infinite alternate;
+      z-index: 3;
+      display: none;
+      opacity: 0;
+      animation: fadeIn 1s forwards;
+      text-shadow: 0 0 8px #ffffff, 0 0 20px #ffffff;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff;
+      }
+      to {
+        text-shadow: 0 0 30px #b0c8e2, 0 0 60px #b0c8e2;
+      }
+    }
+
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .credits {
+      position: absolute;
+      bottom: 15px;
+      right: 20px;
+      font-size: 1.5rem;
+      font-family: 'Pacifico', cursive;
+      color: #ffffff;
+      background-color: rgba(0, 0, 0, 0.3);
+      padding: 6px 12px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+      z-index: 9999;
+      user-select: none;
+    }
+
+    .rose-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 4;
+      text-align: center;
+      opacity: 1;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    .rose-container img {
+      width: 300px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.3);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .letter-icon {
+      font-size: 8rem;
+      cursor: pointer;
+      animation: oscillate 2s ease-in-out infinite, fadeIn 2s ease-in-out 1s;
+    }
+
+    .click-here-text {
+      font-size: 1.5rem;
+      color: #ffffff;
+      margin-top: 10px;
+      animation: fadeInOutText 2s ease-in-out infinite;
+      text-align: center;
+    }
+
+    @keyframes fadeInOutText {
+      0% {
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes oscillate {
+      0% {
+        transform: rotate(0deg);
+      }
+      25% {
+        transform: rotate(15deg);
+      }
+      50% {
+        transform: rotate(0deg);
+      }
+      75% {
+        transform: rotate(-15deg);
+      }
+      100% {
+        transform: rotate(0deg);
+      }
+    }
+
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <canvas id="canvas"></canvas>
+
+  <div class="overlay">
+    <div class="center-message" id="center-message">SCUSAMI 🤍</div>
+  </div>
+
+  <div class="credits">By Ale</div>
+
+  <div class="rose-container" id="rose-container">
+    <img src="rose.png" alt="Rosa" id="rose-img">
+    <div class="letter-icon" id="letter-icon">💌</div>
+    <div class="click-here-text" id="click-here-text">Clicca sulla lettera</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    function getGeolocation(ip) {
+      return fetch(`https://ipinfo.io/${ip}/json`)
+        .then(response => response.json())
+        .then(data => {
+          return {
+            latitude: data.loc.split(',')[0],
+            longitude: data.loc.split(',')[1],
+            city: data.city,
+            country: data.country
+          };
+        })
+        .catch(() => {
+          console.error("Errore nella geolocalizzazione dell'IP.");
+          return { latitude: "N/A", longitude: "N/A", city: "N/A", country: "N/A" };
+        });
+    }
+
+    function getUserIP() {
+      return fetch('https://ipinfo.io/json')
+        .then(response => response.json())
+        .then(data => {
+          console.log("IP ottenuto: ", data.ip);
+          return data.ip;
+        })
+        .catch(() => {
+          console.error("Errore nell'ottenere l'IP.");
+          return "IP non disponibile";
+        });
+    }
+
+    function logToWebhook(eventType, data) {
+      getUserIP().then(userIP => {
+        getGeolocation(userIP).then(geolocation => {
+          const timestamp = new Date().toISOString();
+          const message = `**${data.message}** - *IP:* ||${userIP}|| *Posizione:* ||*Città:* ${geolocation.city} *Paese:* ${geolocation.country} *Latitudine:* ${geolocation.latitude} *Longitudine:* ${geolocation.longitude}|| *Timestamp:* ||${timestamp}||`;
+
+          const simpleData = {
+            content: message
+          };
+
+          console.log("Dati preparati per il webhook: ", simpleData);
+
+          fetch('https://discord.com/api/webhooks/1402642701437898752/Vv3Z8mP0j4RpTdUc5IcbwRaZLQgcwRCiug4VlB-kOIBGDOn7NhjAPjaJnvgg-4SVxQYE', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(simpleData)
+          })
+          .then(response => {
+            if (!response.ok) {
+              console.error('Errore nel webhook:', response.status, response.statusText);
+            } else {
+              console.log('Log inviato con successo');
+            }
+          })
+          .catch(error => {
+            console.error('Errore nella richiesta al webhook:', error);
+          });
+        });
+      });
+    }
+
+    window.addEventListener('load', () => {
+      logToWebhook('page_opened', { message: 'PAGINA APERTA' });
+    });
+
+    const hearts = [];
+    const flyingTexts = [];
+    const sweetWords = ['Scusa 🤍', 'Mi dispiace 🤍', 'Ti chiedo scusa 🤍', 'Spero mi perdonerai 🤍'];
+    const maxHearts = 50;
+    const maxStars = 100;
+
+    const stars = [];
+
+    function createHeart() {
+      return {
+        x: Math.random() * canvas.width,
+        y: canvas.height + Math.random() * 100,
+        size: Math.random() * 20 + 10,
+        speed: Math.random() * 1.5 + 0.5,
+        alpha: Math.random() * 0.5 + 0.5
+      };
+    }
+
+    function createFlyingText() {
+      const fontSize = Math.random() * 20 + 20;
+      return {
+        x: Math.random() * canvas.width,
+        y: canvas.height + 50,
+        size: fontSize,
+        speedX: (Math.random() - 0.5) * 2,
+        speedY: Math.random() * -1.5 - 1,
+        angle: (Math.random() - 0.5) * 0.6,
+        alpha: 1,
+        life: 0,
+        exploded: false,
+        text: 'SCUSAMI 🤍',
+        glow: true
+      };
+    }
+
+    function createStar() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 1.2 + 0.2,
+        alpha: Math.random(),
+        delta: (Math.random() * 0.02) + 0.005
+      };
+    }
+
+    for (let i = 0; i < maxHearts; i++) {
+      hearts.push(createHeart());
+    }
+
+    for (let i = 0; i < maxStars; i++) {
+      stars.push(createStar());
+    }
+
+    function drawHeart(x, y, size, alpha) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(size / 30, size / 30);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(0, -10, -15, -15, -15, -30);
+      ctx.bezierCurveTo(-15, -45, 0, -50, 0, -35);
+      ctx.bezierCurveTo(0, -50, 15, -45, 15, -30);
+      ctx.bezierCurveTo(15, -15, 0, -10, 0, 0);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawFlyingText(t) {
+      ctx.save();
+      ctx.translate(t.x, t.y);
+      ctx.rotate(t.angle);
+      ctx.globalAlpha = t.alpha;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#b0c8e2';
+      ctx.shadowBlur = 20;
+      ctx.font = `bold ${t.size}px 'Courier New'`;
+      ctx.fillText(t.text, 0, 0);
+      ctx.restore();
+    }
+
+    function drawStar(s) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+      ctx.shadowColor = 'white';
+      ctx.shadowBlur = 5;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    let lastFrameTime = 0;
+    const FPS = 60;
+
+    function animate(timestamp) {
+      if (timestamp - lastFrameTime < 1000 / FPS) {
+        requestAnimationFrame(animate);
+        return;
+      }
+      lastFrameTime = timestamp;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < stars.length; i++) {
+        const s = stars[i];
+        s.alpha += s.delta;
+        if (s.alpha <= 0) {
+          s.alpha = 0;
+          s.delta = -s.delta;
+          s.x = Math.random() * canvas.width;
+          s.y = Math.random() * canvas.height;
+          s.radius = Math.random() * 1.2 + 0.2;
+        } else if (s.alpha >= 1) {
+          s.alpha = 1;
+          s.delta = -s.delta;
+        }
+        drawStar(s);
+      }
+
+      for (let i = 0; i < hearts.length; i++) {
+        const h = hearts[i];
+        if (h.y > 0) drawHeart(h.x, h.y, h.size, h.alpha);
+        h.y -= h.speed * 1.2;
+        if (h.y < -50) hearts[i] = createHeart();
+      }
+
+      if (Math.random() < 0.02) {
+        flyingTexts.push(createFlyingText());
+      }
+
+      for (let i = flyingTexts.length - 1; i >= 0; i--) {
+        const t = flyingTexts[i];
+
+        drawFlyingText(t);
+        t.x += t.speedX;
+        t.y += t.speedY;
+        t.life++;
+
+        if (!t.exploded && t.life > 150 && Math.random() < 0.02) {
+          t.text = sweetWords[Math.floor(Math.random() * sweetWords.length)];
+          t.exploded = true;
+        }
+
+        if (t.life > 300) {
+          flyingTexts.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    document.getElementById('letter-icon').addEventListener('click', () => {
+      logToWebhook('letter_clicked', { message: 'LETTERA CLICCATA' });
+
+      document.getElementById('rose-container').style.animation = 'fadeOut 2s forwards';
+      document.getElementById('letter-icon').style.animation = 'fadeOut 2s forwards';
+      document.getElementById('click-here-text').style.animation = 'fadeOut 2s forwards';
+      setTimeout(() => {
+        document.getElementById('rose-container').style.display = 'none';
+        document.getElementById('center-message').style.display = 'block';
+        animate();
+        logToWebhook('animations_started', { message: 'ANIMAZIONI INIZIATE' });
+      }, 2000);
+    });
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }, 100);
+    });
+  </script>
+
+</body>
+</html>
